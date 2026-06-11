@@ -8,6 +8,17 @@
 const App = {
 
     // ───────────────────────────────────────────
+    // إعدادات العملة
+    // ───────────────────────────────────────────
+    currency: {
+        code: 'YER',        // كود العملة
+        symbol: 'ر.ي',      // رمز العملة
+        name: 'ريال يمني',   // اسم العملة
+        decimals: 0,        // عدد الكسور (0 للريال اليمني)
+        locale: 'ar-YE'     // اللغة والمنطقة
+    },
+
+    // ───────────────────────────────────────────
     // حالة التطبيق (State)
     // ───────────────────────────────────────────
     state: {
@@ -37,10 +48,10 @@ const App = {
     init: function() {
         this.initDateDisplay();
         this.loadSettings();
-        this.loadEmployeesFromStorage(); // ← تحميل الموظفين من LocalStorage
+        this.loadEmployeesFromStorage();
         this.bindEvents();
         this.bindSidebarNavigation();
-        this.updateEmployeesUI(); // ← تحديث واجهة الموظفين
+        this.updateEmployeesUI();
     },
 
     // ───────────────────────────────────────────
@@ -50,38 +61,33 @@ const App = {
         const now = new Date();
         const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
         const el = document.getElementById('currentDate');
-        if (el) el.textContent = now.toLocaleDateString('ar-SA', options);
+        if (el) el.textContent = now.toLocaleDateString('ar-YE', options);
     },
 
     // ───────────────────────────────────────────
     // ربط الأحداث
     // ───────────────────────────────────────────
     bindEvents: function() {
-        // رفع ملف الموظفين
         const empFile = document.getElementById('employeesFile');
         if (empFile) {
             empFile.addEventListener('change', (e) => this.handleEmployeesFile(e));
         }
 
-        // رفع ملف البصمة
         const attFile = document.getElementById('attendanceFile');
         if (attFile) {
             attFile.addEventListener('change', (e) => this.handleAttendanceFile(e));
         }
 
-        // زر معالجة البيانات
         const btnProcess = document.getElementById('btnProcess');
         if (btnProcess) {
             btnProcess.addEventListener('click', () => this.processAll());
         }
 
-        // زر حفظ الإعدادات
         const btnSave = document.getElementById('btnSaveSettings');
         if (btnSave) {
             btnSave.addEventListener('click', () => this.saveSettings());
         }
 
-        // زر تصدير Excel
         const btnExport = document.getElementById('btnExportExcel');
         if (btnExport) {
             btnExport.addEventListener('click', () => this.exportResults());
@@ -107,12 +113,9 @@ const App = {
     },
 
     // ═══════════════════════════════════════════
-    // ████████  بيانات الموظفين - LocalStorage  ████████
+    // بيانات الموظفين - LocalStorage
     // ═══════════════════════════════════════════
 
-    /**
-     * حفظ بيانات الموظفين في LocalStorage
-     */
     saveEmployeesToStorage: function() {
         try {
             localStorage.setItem('attendance_employees', JSON.stringify(this.state.employeesData));
@@ -123,9 +126,6 @@ const App = {
         }
     },
 
-    /**
-     * تحميل بيانات الموظفين من LocalStorage
-     */
     loadEmployeesFromStorage: function() {
         try {
             const saved = localStorage.getItem('attendance_employees');
@@ -134,7 +134,7 @@ const App = {
                 const timestamp = localStorage.getItem('attendance_employees_timestamp');
                 console.log('📦 تم تحميل بيانات الموظفين من LocalStorage:', this.state.employeesData.length, 'موظف');
                 if (timestamp) {
-                    console.log('   آخر تحديث:', new Date(timestamp).toLocaleString('ar-SA'));
+                    console.log('   آخر تحديث:', new Date(timestamp).toLocaleString('ar-YE'));
                 }
             }
         } catch (e) {
@@ -143,9 +143,6 @@ const App = {
         }
     },
 
-    /**
-     * حذف بيانات الموظفين من LocalStorage
-     */
     clearEmployeesStorage: function() {
         try {
             localStorage.removeItem('attendance_employees');
@@ -157,9 +154,6 @@ const App = {
         }
     },
 
-    /**
-     * تحديث واجهة عرض حالة الموظفين
-     */
     updateEmployeesUI: function() {
         const fileNameEl = document.getElementById('employeesFileName');
         if (!fileNameEl) return;
@@ -169,7 +163,7 @@ const App = {
             const timestamp = localStorage.getItem('attendance_employees_timestamp');
             let msg = count + ' موظف محفوظين';
             if (timestamp) {
-                msg += ' (آخر تحديث: ' + new Date(timestamp).toLocaleDateString('ar-SA') + ')';
+                msg += ' (آخر تحديث: ' + new Date(timestamp).toLocaleDateString('ar-YE') + ')';
             }
             fileNameEl.textContent = msg;
             fileNameEl.style.color = '#27ae60';
@@ -197,18 +191,12 @@ const App = {
                 return;
             }
 
-            // حفظ البيانات في State
             this.state.employeesData = result.data;
-
-            // حفظ في LocalStorage ← الجديد
             this.saveEmployeesToStorage();
-
-            // تحديث الواجهة ← الجديد
             this.updateEmployeesUI();
 
             this.showAlert('تم قراءة وحفظ ملف الموظفين بنجاح: ' + result.data.length + ' موظف', 'success');
 
-            // إذا كان هناك ملف بصمة محمل مسبقاً ← الجديد
             if (this.state.attendanceData.length > 0) {
                 this.showAlert('تم اكتشاف ملف بصمة محمل. اضغط "معالجة البيانات" لتحديث النتائج.', 'info');
             }
@@ -226,7 +214,6 @@ const App = {
         const file = event.target.files[0];
         if (!file) return;
 
-        // عرض اسم الملف
         const fileNameEl = document.getElementById('attendanceFileName');
         if (fileNameEl) fileNameEl.textContent = file.name;
 
@@ -249,7 +236,6 @@ const App = {
                 'success'
             );
 
-            // إذا كانت بيانات الموظفين موجودة ← الجديد
             if (this.state.employeesData.length > 0) {
                 this.showAlert('بيانات الموظفين جاهزة. اضغط "معالجة البيانات" لحساب النتائج.', 'info');
             } else {
@@ -267,9 +253,7 @@ const App = {
     // معالجة جميع البيانات
     // ───────────────────────────────────────────
     processAll: function() {
-        // التحقق من وجود بيانات الموظفين
         if (this.state.employeesData.length === 0) {
-            // محاولة التحميل من LocalStorage ← الجديد
             this.loadEmployeesFromStorage();
 
             if (this.state.employeesData.length === 0) {
@@ -283,7 +267,6 @@ const App = {
             return;
         }
 
-        // تحديث إعدادات الآلة الحاسبة
         Calculator.updateSettings({
             shift1In: this.state.settings.shift1In,
             shift1Out: this.state.settings.shift1Out,
@@ -294,13 +277,11 @@ const App = {
         });
 
         try {
-            // تنفيذ الحسابات
             this.state.results = Calculator.processAll(
                 this.state.employeesData,
                 this.state.attendanceData
             );
 
-            // تحديث الواجهة
             this.updateStatsCards();
             this.fillAttendanceTable();
             this.fillSalariesTable();
@@ -460,22 +441,14 @@ const App = {
         try {
             const saved = localStorage.getItem('attendance_settings');
             if (saved) {
-            const s = this.state.settings || {};
-
-if (document.getElementById('shift1In'))
-    document.getElementById('shift1In').value = s.shift1In || '08:00';
-
-if (document.getElementById('shift1Out'))
-    document.getElementById('shift1Out').value = s.shift1Out || '12:30';
-
-if (document.getElementById('shift2In'))
-    document.getElementById('shift2In').value = s.shift2In || '15:00';
-
-if (document.getElementById('shift2Out'))
-    document.getElementById('shift2Out').value = s.shift2Out || '21:00';
-
-if (document.getElementById('incompletePenalty'))
-    document.getElementById('incompletePenalty').value = s.incompletePenalty ?? 50;           }
+                this.state.settings = JSON.parse(saved);
+                const s = this.state.settings;
+                if (document.getElementById('shift1In')) document.getElementById('shift1In').value = s.shift1In;
+                if (document.getElementById('shift1Out')) document.getElementById('shift1Out').value = s.shift1Out;
+                if (document.getElementById('shift2In')) document.getElementById('shift2In').value = s.shift2In;
+                if (document.getElementById('shift2Out')) document.getElementById('shift2Out').value = s.shift2Out;
+                if (document.getElementById('incompletePenalty')) document.getElementById('incompletePenalty').value = s.incompletePenalty;
+            }
         } catch (e) {
             console.warn('تعذر قراءة الإعدادات من LocalStorage:', e.message);
         }
@@ -526,8 +499,27 @@ if (document.getElementById('incompletePenalty'))
     },
 
     // ───────────────────────────────────────────
-    // أدوات مساعدة
+    // أدوات مساعدة - تنسيق العملة (الريال اليمني)
     // ───────────────────────────────────────────
+
+    /**
+     * تنسيق المبلغ كعملة (ريال يمني)
+     * يدعم الأرقام الكبيرة (150,000 وما فوق)
+     * @param {Number} amount - المبلغ
+     * @returns {String} المبلغ منسقاً مع العملة
+     */
+    formatCurrency: function(amount) {
+        const num = parseFloat(amount);
+        if (isNaN(num)) return '0 ر.ي';
+
+        // تنسيق الريال اليمني بدون كسور
+        const formatted = num.toLocaleString('ar-YE', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+
+        return formatted + ' ر.ي';
+    },
 
     showAlert: function(message, type) {
         const alertDiv = document.createElement('div');
@@ -557,12 +549,6 @@ if (document.getElementById('incompletePenalty'))
     setText: function(id, text) {
         const el = document.getElementById(id);
         if (el) el.textContent = text;
-    },
-
-    formatCurrency: function(amount) {
-        const num = parseFloat(amount);
-        if (isNaN(num)) return '0 ر.س';
-        return num.toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ر.س';
     },
 
     getEmptyRow: function(colspan) {
